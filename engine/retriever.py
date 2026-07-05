@@ -8,6 +8,7 @@ it just turns a query into a list of {title, url, snippet} dicts.
 from __future__ import annotations
 
 import os
+import re
 
 import httpx
 
@@ -15,6 +16,14 @@ from .errors import MissingAPIKeyError, RetrievalError
 
 TAVILY_URL = "https://api.tavily.com/search"
 TIMEOUT_SECONDS = 5.0
+MAX_SNIPPET_CHARS = 800
+
+# Matches markdown links: [visible text](https://url) -> keep "visible text".
+_MD_LINK = re.compile(r"\[([^\]]+)\]\((?:[^)]+)\)")
+# Matches leftover bare markdown emphasis/heading/bullet markers.
+_MD_NOISE = re.compile(r"[*#`>]+")
+# Collapses runs of whitespace (including newlines) into a single space.
+_WHITESPACE = re.compile(r"\s+")
 
 
 def search_web(query: str, num_results: int = 6) -> list[dict]:
@@ -80,12 +89,28 @@ def _normalize(raw_results: list[dict]) -> list[dict]:
             continue
         normalized.append(
             {
-                "title": (item.get("title") or url).strip(),
+                "title": _clean_snippet(item.get("title") or url),
                 "url": url,
-                "snippet": (item.get("content") or "").strip(),
+                "snippet": _clean_snippet(item.get("content") or ""),
             }
         )
     return normalized
+
+
+def _clean_snippet(text: str) -> str:
+    """Strip markdown-link clutter and collapse whitespace.
+
+    Tavily snippets are scraped from pages and often contain markdown links
+    like ``[AI](https://...)`` and navigation noise. We keep the human-readable
+    text, drop the URL clutter, and truncate very long snippets so the LLM
+    context in the synthesis step stays clean and token-efficient.
+    """
+    text = _MD_LINK.sub(r"\1", text)      # [text](url) -> text
+    text = _MD_NOISE.sub("", text)        # drop *, #, `, >, - markers
+    text = _WHITESPACE.sub(" ", text).strip()
+    if len(text) > MAX_SNIPPET_CHARS:
+        text = text[:MAX_SNIPPET_CHARS].rsplit(" ", 1)[0] + "…"
+    return text
 
 
 if __name__ == "__main__":
