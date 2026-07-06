@@ -114,13 +114,17 @@ Both providers have free tiers. Sign up at <https://tavily.com> and
 <https://console.groq.com>.
 
 ```bash
+cd backend
 cp .env.example .env
 # then edit .env and fill in TAVILY_API_KEY and GROQ_API_KEY
 ```
 
 ### 2. Backend (CLI + API)
 
+Run everything from the `backend/` directory:
+
 ```bash
+cd backend
 pip install -r requirements.txt
 ```
 
@@ -141,6 +145,8 @@ uvicorn api.main:app --reload
 ```
 
 ### 3. Frontend
+
+From the project root:
 
 ```bash
 cd frontend
@@ -278,17 +284,18 @@ Manually tested end-to-end. Results below are from actual runs against the live 
 
 ```
 .
-├── search.py              # CLI entrypoint
-├── engine/
-│   ├── retriever.py       # Tavily search + snippet cleanup + authority ranking
-│   ├── synthesizer.py     # Groq LLM: cited answer + agreement scoring
-│   ├── formatter.py       # CLI output formatting
-│   └── errors.py          # shared exception types → clean messages
-├── api/
-│   └── main.py            # FastAPI /search endpoint (CORS + rate limiting)
+├── backend/
+│   ├── search.py          # CLI entrypoint
+│   ├── engine/
+│   │   ├── retriever.py   # Tavily search + snippet cleanup + authority ranking
+│   │   ├── synthesizer.py # Groq LLM: cited answer + agreement scoring
+│   │   ├── formatter.py   # CLI output formatting
+│   │   └── errors.py      # shared exception types → clean messages
+│   ├── api/
+│   │   └── main.py        # FastAPI /search endpoint (CORS + rate limiting)
+│   ├── requirements.txt
+│   └── .env.example
 ├── frontend/              # Next.js app (App Router, TypeScript, Tailwind)
-├── requirements.txt
-├── .env.example
 └── docs/screenshots/
 ```
 
