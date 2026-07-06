@@ -4,21 +4,30 @@ import { useCallback, useState } from "react";
 import SearchBar from "@/components/SearchBar";
 import ThemeToggle from "@/components/ThemeToggle";
 import Answer from "@/components/Answer";
+import AgreementBadge from "@/components/AgreementBadge";
 import SourceList from "@/components/SourceList";
 import LoadingReadout from "@/components/LoadingReadout";
 import { EmptyState, ErrorState } from "@/components/StateScreen";
 import { search, ApiError } from "@/lib/api";
+import { sanitizeQuery } from "@/lib/sanitizeQuery";
 import type { SearchState } from "@/lib/types";
 
 export default function Home() {
   const [state, setState] = useState<SearchState>({ status: "idle" });
   const [history, setHistory] = useState<string[]>([]);
+  // The input text lives here so history clicks can update what's shown.
+  const [inputValue, setInputValue] = useState("");
   // Shared citation focus — the signature interaction lives here.
   const [activeCite, setActiveCite] = useState<number | null>(null);
   const [pulseCite, setPulseCite] = useState<number | null>(null);
+  // "Show your work" reveals the raw retrieved snippets behind the answer.
+  const [showWork, setShowWork] = useState(false);
 
-  const runSearch = useCallback(async (query: string) => {
+  const runSearch = useCallback(async (rawQuery: string) => {
+    const query = sanitizeQuery(rawQuery);
+    if (!query) return;
     setActiveCite(null);
+    setInputValue(query);
     setState({ status: "loading", query });
     setHistory((h) => [query, ...h.filter((q) => q !== query)].slice(0, 8));
     try {
@@ -62,9 +71,10 @@ export default function Home() {
           <ThemeToggle />
         </div>
         <SearchBar
+          value={inputValue}
+          onChange={setInputValue}
           onSearch={runSearch}
           busy={busy}
-          initial={state.status !== "idle" ? state.query : ""}
         />
       </header>
 
@@ -107,9 +117,17 @@ export default function Home() {
         {showResults && (
           <div className="grid grid-cols-1 gap-10 md:grid-cols-[1fr_20rem]">
             <div>
-              <h2 className="mb-4 font-mono text-xs uppercase tracking-[0.2em] text-muted">
-                Answer
-              </h2>
+              <div className="mb-4 flex flex-wrap items-center gap-3">
+                <h2 className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
+                  Answer
+                </h2>
+                {state.result.agreement && (
+                  <AgreementBadge
+                    agreement={state.result.agreement}
+                    note={state.result.agreement_note ?? ""}
+                  />
+                )}
+              </div>
               <Answer
                 answer={state.result.answer}
                 activeCite={activeCite}
@@ -123,6 +141,8 @@ export default function Home() {
                 activeCite={activeCite}
                 pulseCite={pulseCite}
                 onHover={setActiveCite}
+                showWork={showWork}
+                onToggleWork={() => setShowWork((v) => !v)}
               />
             </aside>
           </div>

@@ -77,7 +77,64 @@ def search_web(query: str, num_results: int = 6) -> list[dict]:
         raise RetrievalError("Tavily returned a non-JSON response.") from exc
 
     results = _normalize(data.get("results", []))
+    results = _rank_by_authority(results)
     return results
+
+
+# Domains we trust more (encyclopedias, reference works, official/edu/gov) and
+# domains we trust less (forums, social, user-generated Q&A, quiz sites). This
+# only re-orders results; nothing is dropped, so a weak source that is the only
+# match still survives — it just sinks below stronger ones covering the same fact.
+_HIGH_AUTHORITY = (
+    "wikipedia.org",
+    "britannica.com",
+    "nature.com",
+    "sciencedirect.com",
+    "who.int",
+    "nih.gov",
+    "nasa.gov",
+    "bbc.com",
+    "reuters.com",
+    "apnews.com",
+)
+_LOW_AUTHORITY = (
+    "reddit.com",
+    "quora.com",
+    "facebook.com",
+    "instagram.com",
+    "twitter.com",
+    "x.com",
+    "tiktok.com",
+    "youtube.com",
+    "pinterest.com",
+    "medium.com",
+    "answers.com",
+)
+
+
+def _authority_tier(url: str) -> int:
+    """Rank a URL's host: 0 = high authority, 1 = neutral, 2 = low authority."""
+    host = ""
+    try:
+        from urllib.parse import urlparse
+
+        host = urlparse(url).hostname or ""
+    except ValueError:
+        host = ""
+    host = host.lower().removeprefix("www.")
+
+    if host.endswith(".gov") or host.endswith(".edu"):
+        return 0
+    if any(host == d or host.endswith("." + d) for d in _HIGH_AUTHORITY):
+        return 0
+    if any(host == d or host.endswith("." + d) for d in _LOW_AUTHORITY):
+        return 2
+    return 1
+
+
+def _rank_by_authority(results: list[dict]) -> list[dict]:
+    """Stable-sort results by authority tier, preserving relevance within a tier."""
+    return sorted(results, key=lambda r: _authority_tier(r.get("url", "")))
 
 
 def _normalize(raw_results: list[dict]) -> list[dict]:

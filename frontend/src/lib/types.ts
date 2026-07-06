@@ -3,11 +3,16 @@
 export type Source = {
   title: string;
   url: string;
+  snippet?: string;
 };
+
+export type Agreement = "agree" | "mixed" | "single";
 
 export type SearchResponse = {
   answer: string;
   sources: Source[];
+  agreement?: Agreement;
+  agreement_note?: string;
 };
 
 // The UI's view of a search: which query, and the result or failure.

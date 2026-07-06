@@ -7,6 +7,8 @@ type Props = {
   activeCite: number | null;
   pulseCite: number | null;
   onHover: (n: number | null) => void;
+  showWork: boolean;
+  onToggleWork: () => void;
 };
 
 function hostname(url: string): string {
@@ -19,17 +21,35 @@ function hostname(url: string): string {
 
 // The evidence rail. Each card carries a colored index tab matching its
 // citation number, and lights up when its [n] in the answer is active.
+// "Show work" reveals the raw retrieved snippet that fed the answer — the
+// retrieval step behind the polished output.
 export default function SourceList({
   sources,
   activeCite,
   pulseCite,
   onHover,
+  showWork,
+  onToggleWork,
 }: Props) {
+  const hasSnippets = sources.some((s) => s.snippet && s.snippet.length > 0);
+
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
-        Sources
-      </h2>
+      <div className="flex items-center justify-between">
+        <h2 className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
+          Sources
+        </h2>
+        {hasSnippets && (
+          <button
+            type="button"
+            onClick={onToggleWork}
+            aria-pressed={showWork}
+            className="font-mono text-xs text-muted hover:text-cite"
+          >
+            {showWork ? "hide work" : "show work"}
+          </button>
+        )}
+      </div>
       <ol className="flex flex-col gap-3">
         {sources.map((source, i) => {
           const n = i + 1;
@@ -58,12 +78,23 @@ export default function SourceList({
                   <span className="mt-1 truncate font-mono text-xs text-muted">
                     {hostname(source.url)}
                   </span>
+                  {showWork && source.snippet && (
+                    <span className="mt-2 border-l-2 border-line pl-2 font-body text-[0.85rem] leading-relaxed text-muted">
+                      {source.snippet}
+                    </span>
+                  )}
                 </span>
               </a>
             </li>
           );
         })}
       </ol>
+      {showWork && (
+        <p className="font-mono text-[0.7rem] leading-relaxed text-muted">
+          Raw snippets retrieved from the web and passed to the model. The
+          answer above is synthesized from these — this is the retrieval step.
+        </p>
+      )}
     </div>
   );
 }

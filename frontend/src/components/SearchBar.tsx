@@ -1,21 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { sanitizeQuery } from "@/lib/sanitizeQuery";
 
 type Props = {
+  value: string;
+  onChange: (value: string) => void;
   onSearch: (query: string) => void;
   busy: boolean;
-  initial?: string;
 };
 
 // The hero input, pinned to the top. The question is the interface: keyboard-
-// submittable, no mouse required.
-export default function SearchBar({ onSearch, busy, initial = "" }: Props) {
-  const [value, setValue] = useState(initial);
-
+// submittable, no mouse required. Value is controlled by the parent so history
+// clicks can update what's shown here.
+export default function SearchBar({ value, onChange, onSearch, busy }: Props) {
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    const q = value.trim();
+    const q = sanitizeQuery(value);
     if (q && !busy) onSearch(q);
   }
 
@@ -32,7 +32,7 @@ export default function SearchBar({ onSearch, busy, initial = "" }: Props) {
         id="q"
         type="text"
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         placeholder="Ask anything — you'll get a cited answer"
         autoComplete="off"
         autoFocus
@@ -40,7 +40,7 @@ export default function SearchBar({ onSearch, busy, initial = "" }: Props) {
       />
       <button
         type="submit"
-        disabled={busy || !value.trim()}
+        disabled={busy || !sanitizeQuery(value)}
         className="shrink-0 rounded-md border border-line px-3 py-1.5 font-mono text-sm text-muted enabled:hover:border-cite enabled:hover:text-cite disabled:opacity-40"
         aria-label="Search"
       >

@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Answer Engine — frontend
 
-## Getting Started
+The Next.js interface for the answer engine. See the [root README](../README.md)
+for the full project (architecture, backend, why Tavily + Groq).
 
-First, run the development server:
+## Run
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Requires the FastAPI backend running (default `http://localhost:8000`). Point
+elsewhere with `NEXT_PUBLIC_API_URL` in `.env.local`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Design
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Direction: **"Ledger / Instrument."** This is an *instant-answer engine*, not a
+chatbot — so the UI reads like an instrument that resolves a question, not a chat
+thread. A calm slate-teal field keeps the answer and the citation accent as the only
+things that pop; the teal accent has exactly one job — marking the link between a
+claim and its evidence.
 
-## Learn More
+- **Type:** Fraunces (display / question), Newsreader (answer prose), IBM Plex Mono
+  (citations, URLs, the loading readout).
+- **Signature interaction:** hovering a `[n]` in the answer highlights its source
+  card, and vice versa; clicking scrolls to and pulses the card.
+- **States:** landing, results, staged loading readout, empty, error, session history.
+- **Differentiators:** source-agreement badge, and a "show your work" toggle that
+  reveals the raw retrieved snippets.
 
-To learn more about Next.js, take a look at the following resources:
+## Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+├── app/
+│   ├── page.tsx           # orchestrates state + the citation-link interaction
+│   ├── layout.tsx         # fonts + metadata
+│   └── globals.css        # design tokens (light/dark), citation styles
+├── components/
+│   ├── SearchBar.tsx      # pinned hero input
+│   ├── Answer.tsx         # answer prose with interactive [n] citations
+│   ├── SourceList.tsx     # evidence rail + "show your work"
+│   ├── AgreementBadge.tsx # source-agreement readout
+│   ├── LoadingReadout.tsx # staged loading sequence
+│   ├── StateScreen.tsx    # empty + error states
+│   └── ThemeToggle.tsx    # auto / light / dark
+└── lib/
+    ├── api.ts             # calls the /search endpoint
+    ├── parseAnswer.ts     # splits answer prose into text + citation tokens
+    ├── sanitizeQuery.ts   # strips stray/wrapping/smart quotes
+    └── types.ts
+```
