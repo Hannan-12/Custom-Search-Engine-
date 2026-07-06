@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+/*
+  "Ledger / Instrument" design system.
+  A calm near-neutral field so the ANSWER and the CITATION accent are the only
+  things that pop. The teal accent has exactly one job: marking the link between
+  a claim and its evidence.
+*/
+
+:root {
+  /* Dark is the default field. */
+  --field: #0f1417; /* instrument-panel background, not pure black */
+  --surface: #171e22; /* raised cards / input */
+  --surface-2: #1d262b; /* hover / active surface */
+  --ink: #e8edef; /* primary text — the answer */
+  --muted: #8a979d; /* labels, snippets, metadata */
+  --cite: #5ac8b0; /* citation accent — traceable evidence */
+  --cite-soft: rgba(90, 200, 176, 0.14); /* citation highlight wash */
+  --line: #26312f; /* hairlines, card borders */
+  --danger: #e0a3a3; /* error voice */
+}
+
+:root[data-theme="light"] {
+  --field: #f7f6f2; /* warm paper */
+  --surface: #ffffff;
+  --surface-2: #efeee8;
+  --ink: #1b2224;
+  --muted: #5e6b70;
+  --cite: #12876e; /* darker teal for contrast on paper */
+  --cite-soft: rgba(18, 135, 110, 0.12);
+  --line: #e2e0d6;
+  --danger: #a13b3b;
+}
+
+/* Follow the OS when no explicit theme is chosen. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --field: #f7f6f2;
+    --surface: #ffffff;
+    --surface-2: #efeee8;
+    --ink: #1b2224;
+    --muted: #5e6b70;
+    --cite: #12876e;
+    --cite-soft: rgba(18, 135, 110, 0.12);
+    --line: #e2e0d6;
+    --danger: #a13b3b;
+  }
+}
+
+@theme inline {
+  --color-field: var(--field);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-cite: var(--cite);
+  --color-line: var(--line);
+  --color-danger: var(--danger);
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background: var(--field);
+  color: var(--ink);
+  font-family: var(--font-body), Georgia, serif;
+}
+
+/* The claim↔source link is the signature interaction. When a citation OR its
+   source card is active, both light up with the same accent wash. */
+.cite-ref {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.78em;
+  color: var(--cite);
+  cursor: pointer;
+  padding: 0 0.15em;
+  border-radius: 3px;
+  text-decoration: none;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.cite-ref:hover,
+.cite-ref:focus-visible,
+.cite-ref[data-active="true"] {
+  background: var(--cite-soft);
+  outline: none;
+}
+
+.source-card {
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+.source-card[data-active="true"] {
+  border-color: var(--cite);
+  background: var(--surface-2);
+}
+
+/* The colored index tab on each source card, matching its citation. */
+.source-tab {
+  color: var(--cite);
+  border-color: var(--cite);
+}
+
+@keyframes cite-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--cite-soft);
+  }
+  60% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+.source-card[data-pulse="true"] {
+  animation: cite-pulse 700ms ease-out;
+}
+
+/* Visible keyboard focus everywhere — part of the quality floor. */
+:focus-visible {
+  outline: 2px solid var(--cite);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Honor reduced-motion: no pulses, no staged fades. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
