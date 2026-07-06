@@ -15,19 +15,23 @@ elsewhere with `NEXT_PUBLIC_API_URL` in `.env.local`.
 
 ## Design
 
-Direction: **"Ledger / Instrument."** This is an *instant-answer engine*, not a
-chatbot — so the UI reads like an instrument that resolves a question, not a chat
-thread. A calm slate-teal field keeps the answer and the citation accent as the only
-things that pop; the teal accent has exactly one job — marking the link between a
-claim and its evidence.
+Direction: **"Case File."** The product verifies claims against evidence and never
+hides disagreement — so the UI reads like a case report, not another AI-chat
+template. A charcoal desk holds a parchment answer sheet; sources are numbered
+**exhibits**; the agreement score is a **verdict stamp** pressed onto the answer.
+Earth-tone accents are semantic — each maps to a verdict state, never decoration.
+One committed dark look (no theme toggle).
 
-- **Type:** Fraunces (display / question), Newsreader (answer prose), IBM Plex Mono
-  (citations, URLs, the loading readout).
-- **Signature interaction:** hovering a `[n]` in the answer highlights its source
-  card, and vice versa; clicking scrolls to and pulses the card.
-- **States:** landing, results, staged loading readout, empty, error, session history.
-- **Differentiators:** source-agreement badge, and a "show your work" toggle that
-  reveals the raw retrieved snippets.
+- **Type:** Fraunces (case-file headlines), Newsreader (answer prose), IBM Plex Mono
+  (case numbers, EXHIBIT labels, the verdict stamp, the case-log).
+- **Signature element:** the verdict stamp — CONFIRMED (green) / DISPUTED (rust) /
+  UNVERIFIED (red), rotated and ink-textured, animated in like it's physically
+  pressed when the answer resolves.
+- **Signature interaction:** hovering a `[A]` in the answer lifts and highlights its
+  exhibit card, and vice versa; clicking scrolls to and pulses the card.
+- **States:** landing, results, staged case-log loading, empty, error, prior cases.
+- **Differentiators:** the verdict stamp (source-agreement scoring), and a "show
+  material" toggle that reveals the raw retrieved snippet behind each exhibit.
 
 ## Structure
 
@@ -38,16 +42,16 @@ src/
 │   ├── layout.tsx         # fonts + metadata
 │   └── globals.css        # design tokens (light/dark), citation styles
 ├── components/
-│   ├── SearchBar.tsx      # pinned hero input
-│   ├── Answer.tsx         # answer prose with interactive [n] citations
-│   ├── SourceList.tsx     # evidence rail + "show your work"
-│   ├── AgreementBadge.tsx # source-agreement readout
-│   ├── LoadingReadout.tsx # staged loading sequence
-│   ├── StateScreen.tsx    # empty + error states
-│   └── ThemeToggle.tsx    # auto / light / dark
+│   ├── SearchBar.tsx      # the question input ("open a case")
+│   ├── Answer.tsx         # answer prose with interactive [A] citations
+│   ├── SourceList.tsx     # exhibit cards + "show material"
+│   ├── VerdictStamp.tsx   # the verdict stamp (agreement scoring)
+│   ├── LoadingReadout.tsx # staged case-log loading sequence
+│   └── StateScreen.tsx    # empty + error states
 └── lib/
     ├── api.ts             # calls the /search endpoint
     ├── parseAnswer.ts     # splits answer prose into text + citation tokens
+    ├── exhibit.ts         # maps source number -> exhibit letter (A, B, C…)
     ├── sanitizeQuery.ts   # strips stray/wrapping/smart quotes
     └── types.ts
 ```

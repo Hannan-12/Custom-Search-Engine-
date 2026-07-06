@@ -1,65 +1,47 @@
 @import "tailwindcss";
 
 /*
-  "Ledger / Instrument" design system.
-  A calm near-neutral field so the ANSWER and the CITATION accent are the only
-  things that pop. The teal accent has exactly one job: marking the link between
-  a claim and its evidence.
+  "Case File" design system.
+  A charcoal desk holding a parchment case report. Sources are numbered exhibits;
+  the agreement score is a verdict stamp pressed onto the answer. Earth-tone
+  accents are semantic — each maps to a verdict state, never decoration.
+  One committed look (no light/dark toggle).
 */
 
 :root {
-  /* Dark is the default field. */
-  --field: #0f1417; /* instrument-panel background, not pure black */
-  --surface: #171e22; /* raised cards / input */
-  --surface-2: #1d262b; /* hover / active surface */
-  --ink: #e8edef; /* primary text — the answer */
-  --muted: #8a979d; /* labels, snippets, metadata */
-  --cite: #5ac8b0; /* citation accent — traceable evidence */
-  --cite-soft: rgba(90, 200, 176, 0.14); /* citation highlight wash */
-  --line: #26312f; /* hairlines, card borders */
-  --danger: #e0a3a3; /* error voice */
-  --warn: #d9b25e; /* mixed-agreement accent (sources conflict) */
-}
+  --shell: #14161a; /* charcoal desk */
+  --shell-2: #1b1e23; /* raised charcoal (input, header) */
+  --parchment: #ede6d6; /* exhibit cards + answer sheet */
+  --parchment-2: #e4dcc7; /* parchment hover / active */
+  --ink: #1f1b16; /* text on parchment */
+  --ink-soft: #554f45; /* secondary text on parchment */
+  --shell-ink: #ddd6c8; /* text on charcoal */
+  --shell-muted: #8a8578; /* metadata on charcoal (case №, labels) */
 
-:root[data-theme="light"] {
-  --field: #f7f6f2; /* warm paper */
-  --surface: #ffffff;
-  --surface-2: #efeee8;
-  --ink: #1b2224;
-  --muted: #5e6b70;
-  --cite: #12876e; /* darker teal for contrast on paper */
-  --cite-soft: rgba(18, 135, 110, 0.12);
-  --line: #e2e0d6;
-  --danger: #a13b3b;
-  --warn: #9a6f12;
-}
+  /* Verdict states */
+  --confirmed: #2f5233; /* forest green — sources agree */
+  --disputed: #b0501d; /* rust/amber — sources differ */
+  --unverified: #8c2f39; /* brick red — no relevant sources */
+  --single: #6b6459; /* muted — single source */
 
-/* Follow the OS when no explicit theme is chosen. */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --field: #f7f6f2;
-    --surface: #ffffff;
-    --surface-2: #efeee8;
-    --ink: #1b2224;
-    --muted: #5e6b70;
-    --cite: #12876e;
-    --cite-soft: rgba(18, 135, 110, 0.12);
-    --line: #e2e0d6;
-    --danger: #a13b3b;
-    --warn: #9a6f12;
-  }
+  --line: #2b2e33; /* hairlines on charcoal */
+  --line-parchment: #cfc6b2; /* hairlines on parchment */
 }
 
 @theme inline {
-  --color-field: var(--field);
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
+  --color-shell: var(--shell);
+  --color-shell-2: var(--shell-2);
+  --color-parchment: var(--parchment);
+  --color-parchment-2: var(--parchment-2);
   --color-ink: var(--ink);
-  --color-muted: var(--muted);
-  --color-cite: var(--cite);
+  --color-ink-soft: var(--ink-soft);
+  --color-shell-ink: var(--shell-ink);
+  --color-shell-muted: var(--shell-muted);
+  --color-confirmed: var(--confirmed);
+  --color-disputed: var(--disputed);
+  --color-unverified: var(--unverified);
   --color-line: var(--line);
-  --color-danger: var(--danger);
-  --color-warn: var(--warn);
+  --color-line-parchment: var(--line-parchment);
 
   --font-display: var(--font-display);
   --font-body: var(--font-body);
@@ -67,67 +49,139 @@
 }
 
 body {
-  background: var(--field);
-  color: var(--ink);
+  background: var(--shell);
+  color: var(--shell-ink);
   font-family: var(--font-body), Georgia, serif;
 }
 
-/* The claim↔source link is the signature interaction. When a citation OR its
-   source card is active, both light up with the same accent wash. */
+/* ── Citation ↔ exhibit linking (the signature interaction) ──────────────── */
+/* Citations render as [A], [B]… matching each exhibit card's letter. */
 .cite-ref {
   font-family: var(--font-mono), monospace;
-  font-size: 0.78em;
-  color: var(--cite);
+  font-size: 0.72em;
+  font-weight: 600;
+  color: var(--ink);
   cursor: pointer;
-  padding: 0 0.15em;
-  border-radius: 3px;
+  padding: 0.05em 0.2em;
+  border-radius: 2px;
   text-decoration: none;
-  transition: background-color 120ms ease, color 120ms ease;
+  border-bottom: 1.5px solid var(--ink-soft);
+  transition: background-color 120ms ease, border-color 120ms ease;
 }
 .cite-ref:hover,
 .cite-ref:focus-visible,
 .cite-ref[data-active="true"] {
-  background: var(--cite-soft);
+  background: rgba(31, 27, 22, 0.1);
+  border-color: var(--ink);
   outline: none;
 }
 
-.source-card {
-  transition: border-color 140ms ease, background-color 140ms ease;
+/* Exhibit cards lift and light up when their citation is active. */
+.exhibit-card {
+  transition: transform 150ms ease, box-shadow 150ms ease,
+    background-color 150ms ease;
 }
-.source-card[data-active="true"] {
-  border-color: var(--cite);
-  background: var(--surface-2);
+.exhibit-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+.exhibit-card[data-active="true"] {
+  background: var(--parchment-2);
+  box-shadow: 0 0 0 2px var(--ink) inset, 0 6px 18px rgba(0, 0, 0, 0.35);
 }
 
-/* The colored index tab on each source card, matching its citation. */
-.source-tab {
-  color: var(--cite);
-  border-color: var(--cite);
+/* ── Verdict stamp (the signature element) ──────────────────────────────── */
+.stamp {
+  font-family: var(--font-mono), monospace;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  border: 2.5px solid currentColor;
+  border-radius: 4px;
+  padding: 0.35rem 0.7rem;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+  /* imperfect inked edge */
+  filter: url(#stamp-rough);
+  /* faint double-print: a second offset copy of the border */
+  box-shadow: 1.5px 1.5px 0 currentColor;
+  opacity: 0.92;
+}
+.stamp-confirmed {
+  color: var(--confirmed);
+}
+.stamp-disputed {
+  color: var(--disputed);
+}
+.stamp-unverified {
+  color: var(--unverified);
+}
+.stamp-single {
+  color: var(--single);
 }
 
-@keyframes cite-pulse {
+/* The stamp is pressed onto the sheet when the answer resolves. */
+@keyframes stamp-press {
   0% {
-    box-shadow: 0 0 0 0 var(--cite-soft);
+    transform: rotate(var(--stamp-rot)) scale(1.4);
+    opacity: 0;
   }
   60% {
-    box-shadow: 0 0 0 6px transparent;
+    transform: rotate(var(--stamp-rot)) scale(0.94);
+    opacity: 0.92;
+  }
+  80% {
+    transform: rotate(var(--stamp-rot)) scale(1.04);
   }
   100% {
-    box-shadow: 0 0 0 0 transparent;
+    transform: rotate(var(--stamp-rot)) scale(1);
+    opacity: 0.92;
   }
 }
-.source-card[data-pulse="true"] {
-  animation: cite-pulse 700ms ease-out;
+.stamp-animate {
+  animation: stamp-press 260ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
 }
 
-/* Visible keyboard focus everywhere — part of the quality floor. */
+/* Faint impact pulse at the moment of contact. */
+@keyframes stamp-impact {
+  0% {
+    box-shadow: 0 0 0 0 rgba(31, 27, 22, 0.25);
+    opacity: 0.5;
+  }
+  100% {
+    box-shadow: 0 0 0 22px rgba(31, 27, 22, 0);
+    opacity: 0;
+  }
+}
+.stamp-impact {
+  animation: stamp-impact 320ms ease-out both;
+}
+
+/* Case-log loading: a blinking cursor on the active line. */
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+.cursor {
+  animation: blink 1s step-end infinite;
+}
+
+/* Visible keyboard focus everywhere. */
 :focus-visible {
-  outline: 2px solid var(--cite);
+  outline: 2px solid var(--disputed);
   outline-offset: 2px;
-  border-radius: 3px;
+  border-radius: 2px;
 }
 
-/* Honor reduced-motion: no pulses, no staged fades. */
+/* Honor reduced-motion: no press/overshoot/impact, no blink. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -135,5 +189,10 @@ body {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+  }
+  .stamp-animate {
+    animation: none;
+    transform: rotate(var(--stamp-rot));
+    opacity: 0.92;
   }
 }

@@ -23,26 +23,26 @@ export default function SearchBar({ value, onChange, onSearch, busy }: Props) {
     <form onSubmit={submit} className="flex items-center gap-3">
       <label
         htmlFor="q"
-        className="font-mono text-sm text-cite shrink-0"
+        className="font-mono text-sm text-shell-muted shrink-0"
         aria-hidden
       >
-        ask&nbsp;▸
+        open&nbsp;▸
       </label>
       <input
         id="q"
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Ask anything — you'll get a cited answer"
+        placeholder="State the question to investigate"
         autoComplete="off"
         autoFocus
-        className="w-full bg-transparent font-display text-2xl md:text-3xl text-ink placeholder:text-muted placeholder:font-body placeholder:text-xl focus:outline-none"
+        className="w-full bg-transparent font-display text-2xl md:text-3xl text-shell-ink placeholder:text-shell-muted placeholder:font-body placeholder:text-xl focus:outline-none"
       />
       <button
         type="submit"
         disabled={busy || !sanitizeQuery(value)}
-        className="shrink-0 rounded-md border border-line px-3 py-1.5 font-mono text-sm text-muted enabled:hover:border-cite enabled:hover:text-cite disabled:opacity-40"
-        aria-label="Search"
+        className="shrink-0 rounded-md border border-line px-3 py-1.5 font-mono text-sm text-shell-muted enabled:hover:border-shell-ink enabled:hover:text-shell-ink disabled:opacity-40"
+        aria-label="Open case"
       >
         {busy ? "…" : "⏎"}
       </button>

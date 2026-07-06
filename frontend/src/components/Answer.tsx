@@ -1,6 +1,7 @@
 "use client";
 
 import { parseAnswer } from "@/lib/parseAnswer";
+import { exhibitLabel } from "@/lib/exhibit";
 
 type Props = {
   answer: string;
@@ -9,8 +10,9 @@ type Props = {
   onCiteClick: (n: number) => void;
 };
 
-// Renders the synthesized answer as reading prose, with each [n] citation as an
-// interactive marker bound to its source card (the signature interaction).
+// The answer sheet's prose, with each citation as an interactive [A]/[B] marker
+// bound to its exhibit card (the signature interaction). Citation numbers from
+// the model are shown as exhibit letters to match the EXHIBIT A/B/C labels.
 export default function Answer({
   answer,
   activeCite,
@@ -20,7 +22,7 @@ export default function Answer({
   const tokens = parseAnswer(answer);
 
   return (
-    <p className="font-body text-[1.3rem] leading-[1.6] text-ink">
+    <p className="font-body text-[1.25rem] leading-[1.7] text-ink">
       {tokens.map((token, i) => {
         if (token.kind === "text") {
           return <span key={i}>{token.value}</span>;
@@ -29,10 +31,10 @@ export default function Answer({
         return (
           <a
             key={i}
-            href={`#source-${token.n}`}
+            href={`#exhibit-${token.n}`}
             className="cite-ref align-super"
             data-active={isActive || undefined}
-            aria-label={`Jump to source ${token.n}`}
+            aria-label={`Jump to exhibit ${exhibitLabel(token.n)}`}
             onMouseEnter={() => onCiteHover(token.n)}
             onMouseLeave={() => onCiteHover(null)}
             onFocus={() => onCiteHover(token.n)}
@@ -42,7 +44,7 @@ export default function Answer({
               onCiteClick(token.n);
             }}
           >
-            [{token.n}]
+            [{exhibitLabel(token.n)}]
           </a>
         );
       })}

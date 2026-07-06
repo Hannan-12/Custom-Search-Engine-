@@ -1,10 +1,9 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import SearchBar from "@/components/SearchBar";
-import ThemeToggle from "@/components/ThemeToggle";
 import Answer from "@/components/Answer";
-import AgreementBadge from "@/components/AgreementBadge";
+import VerdictStamp from "@/components/VerdictStamp";
 import SourceList from "@/components/SourceList";
 import LoadingReadout from "@/components/LoadingReadout";
 import { EmptyState, ErrorState } from "@/components/StateScreen";
@@ -12,15 +11,19 @@ import { search, ApiError } from "@/lib/api";
 import { sanitizeQuery } from "@/lib/sanitizeQuery";
 import type { SearchState } from "@/lib/types";
 
+// A stable-ish case number derived from a counter, for the dossier ticker.
+function caseNumber(seq: number): string {
+  return `№${String(400 + seq).padStart(5, "0")}`;
+}
+
 export default function Home() {
   const [state, setState] = useState<SearchState>({ status: "idle" });
   const [history, setHistory] = useState<string[]>([]);
-  // The input text lives here so history clicks can update what's shown.
   const [inputValue, setInputValue] = useState("");
+  const [seq, setSeq] = useState(0);
   // Shared citation focus — the signature interaction lives here.
   const [activeCite, setActiveCite] = useState<number | null>(null);
   const [pulseCite, setPulseCite] = useState<number | null>(null);
-  // "Show your work" reveals the raw retrieved snippets behind the answer.
   const [showWork, setShowWork] = useState(false);
 
   const runSearch = useCallback(async (rawQuery: string) => {
@@ -28,6 +31,7 @@ export default function Home() {
     if (!query) return;
     setActiveCite(null);
     setInputValue(query);
+    setSeq((s) => s + 1);
     setState({ status: "loading", query });
     setHistory((h) => [query, ...h.filter((q) => q !== query)].slice(0, 8));
     try {
@@ -40,16 +44,15 @@ export default function Home() {
         const message =
           err instanceof ApiError
             ? err.message
-            : "Something went wrong on the way to an answer.";
+            : "Something went wrong on the way to a verdict.";
         setState({ status: "error", query, message });
       }
     }
   }, []);
 
-  // Clicking a citation scrolls to its source card and pulses it.
   const onCiteClick = useCallback((n: number) => {
     setActiveCite(n);
-    const el = document.getElementById(`source-${n}`);
+    const el = document.getElementById(`exhibit-${n}`);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
       setPulseCite(n);
@@ -59,16 +62,30 @@ export default function Home() {
 
   const busy = state.status === "loading";
   const showResults = state.status === "done";
+  const stamp = useMemo(() => new Date().toISOString().slice(0, 16).replace("T", " "), [seq]);
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-5 sm:px-8">
-      {/* Pinned hero input */}
-      <header className="sticky top-0 z-10 -mx-5 border-b border-line bg-field/95 px-5 py-4 backdrop-blur sm:-mx-8 sm:px-8">
-        <div className="mb-3 flex items-center justify-between">
-          <span className="font-mono text-xs uppercase tracking-[0.25em] text-muted">
-            answer engine
+      {/* Roughening filter for the inked-stamp edge. */}
+      <svg width="0" height="0" className="absolute" aria-hidden>
+        <filter id="stamp-rough">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.9"
+            numOctaves="2"
+            result="noise"
+          />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.4" />
+        </filter>
+      </svg>
+
+      {/* Case header + question */}
+      <header className="sticky top-0 z-10 -mx-5 border-b border-line bg-shell/95 px-5 py-4 backdrop-blur sm:-mx-8 sm:px-8">
+        <div className="mb-2 flex items-center justify-between font-mono text-[0.7rem] uppercase tracking-[0.25em] text-shell-muted">
+          <span>
+            Case File · {seq > 0 ? caseNumber(seq) : "new"}
           </span>
-          <ThemeToggle />
+          {seq > 0 && <span>{stamp}</span>}
         </div>
         <SearchBar
           value={inputValue}
@@ -82,17 +99,17 @@ export default function Home() {
       <section className="flex-1 py-10">
         {state.status === "idle" && (
           <div className="max-w-prose pt-8">
-            <p className="font-display text-3xl leading-tight text-ink sm:text-4xl">
-              Ask a question. Get an answer where every claim traces back to a
-              live source.
-            </p>
-            <p className="mt-4 font-body text-lg text-muted">
-              Not a list of links to sift through — a written answer, with the
-              evidence attached. Hover a{" "}
+            <h1 className="font-display text-3xl font-bold leading-tight text-shell-ink sm:text-4xl">
+              Every answer is a case. Every claim, an exhibit. Every verdict,
+              on the record.
+            </h1>
+            <p className="mt-4 font-body text-lg text-shell-muted">
+              Ask a question and get a written answer with its evidence attached —
+              and an honest verdict on whether the sources actually agree. Hover a{" "}
               <span className="cite-ref" data-active>
-                [1]
+                [A]
               </span>{" "}
-              to see where it came from.
+              to see the exhibit behind it.
             </p>
           </div>
         )}
@@ -117,23 +134,29 @@ export default function Home() {
         {showResults && (
           <div className="grid grid-cols-1 gap-10 md:grid-cols-[1fr_20rem]">
             <div>
-              <div className="mb-4 flex flex-wrap items-center gap-3">
-                <h2 className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
-                  Answer
-                </h2>
-                {state.result.agreement && (
-                  <AgreementBadge
-                    agreement={state.result.agreement}
-                    note={state.result.agreement_note ?? ""}
-                  />
-                )}
+              {/* Answer sheet (parchment) with the verdict stamp pressed on. */}
+              <div className="relative rounded-md bg-parchment p-6 sm:p-8">
+                <div className="mb-4 flex items-start justify-between gap-4">
+                  <h2 className="font-mono text-xs uppercase tracking-[0.25em] text-ink-soft">
+                    Answer
+                  </h2>
+                  {state.result.agreement && (
+                    <div className="-mt-1 shrink-0">
+                      <VerdictStamp
+                        agreement={state.result.agreement}
+                        note={state.result.agreement_note ?? ""}
+                        animateKey={`${seq}-${state.result.agreement}`}
+                      />
+                    </div>
+                  )}
+                </div>
+                <Answer
+                  answer={state.result.answer}
+                  activeCite={activeCite}
+                  onCiteHover={setActiveCite}
+                  onCiteClick={onCiteClick}
+                />
               </div>
-              <Answer
-                answer={state.result.answer}
-                activeCite={activeCite}
-                onCiteHover={setActiveCite}
-                onCiteClick={onCiteClick}
-              />
             </div>
             <aside className="md:sticky md:top-32 md:self-start">
               <SourceList
@@ -149,19 +172,19 @@ export default function Home() {
         )}
       </section>
 
-      {/* Session history */}
+      {/* Prior cases (session history) */}
       {history.length > 1 && (
         <footer className="border-t border-line py-4">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <span className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
-              recent
+            <span className="font-mono text-xs uppercase tracking-[0.25em] text-shell-muted">
+              Prior cases
             </span>
             {history.slice(1).map((q) => (
               <button
                 key={q}
                 onClick={() => runSearch(q)}
                 disabled={busy}
-                className="font-body text-sm text-muted hover:text-cite disabled:opacity-40"
+                className="font-body text-sm text-shell-muted hover:text-shell-ink disabled:opacity-40"
               >
                 {q}
               </button>

@@ -2,66 +2,59 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// An intentional loading sequence, not a spinner: the readout steps through the
-// real stages of the pipeline. Respects prefers-reduced-motion by showing a
-// single static line instead of an animated progression.
-const STAGES = [
-  "searching the web",
-  "reading sources",
-  "writing answer",
+// The case log: the pipeline's real steps, written out in real time like a
+// clerk building the file — not a generic spinner. Respects reduced-motion by
+// showing all lines at once with no cursor.
+const STEPS = [
+  "Searching sources",
+  "Reviewing exhibits",
+  "Preparing verdict",
 ];
 
 export default function LoadingReadout({ query }: { query: string }) {
-  const [stage, setStage] = useState(0);
+  const [step, setStep] = useState(0);
   const reduced = useRef(false);
 
   useEffect(() => {
     reduced.current =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced.current) return;
-
+    if (reduced.current) {
+      setStep(STEPS.length - 1);
+      return;
+    }
     const timers = [
-      setTimeout(() => setStage(1), 1100),
-      setTimeout(() => setStage(2), 2600),
+      setTimeout(() => setStep(1), 1200),
+      setTimeout(() => setStep(2), 2700),
     ];
     return () => timers.forEach(clearTimeout);
   }, []);
 
   return (
     <div
-      className="flex flex-col gap-4"
+      className="font-mono text-sm text-shell-ink"
       role="status"
       aria-live="polite"
-      aria-label={`Working on: ${query}`}
+      aria-label={`Opening case: ${query}`}
     >
-      {STAGES.map((label, i) => {
-        const state =
-          reduced.current || i === stage
-            ? "active"
-            : i < stage
-              ? "done"
-              : "pending";
+      {STEPS.map((label, i) => {
+        const visible = reduced.current || i <= step;
+        const active = !reduced.current && i === step;
+        if (!visible) return null;
         return (
           <div
             key={label}
-            className="flex items-center gap-3 font-mono text-sm"
-            style={{
-              color:
-                state === "pending" ? "var(--muted)" : "var(--ink)",
-              opacity: state === "pending" ? 0.4 : 1,
-            }}
+            className="flex items-center gap-2 py-0.5"
+            style={{ color: i < step ? "var(--shell-muted)" : undefined }}
           >
-            <span
-              aria-hidden
-              style={{ color: state === "done" ? "var(--cite)" : undefined }}
-            >
-              {state === "done" ? "●" : state === "active" ? "◍" : "◦"}
+            <span aria-hidden className="text-shell-muted">
+              &gt;
             </span>
             <span>
               {label}
-              {state === "active" && !reduced.current ? "…" : ""}
+              {i < step ? " — done" : "…"}
             </span>
+            {active && <span className="cursor">▋</span>}
           </div>
         );
       })}

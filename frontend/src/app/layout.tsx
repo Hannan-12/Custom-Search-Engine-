@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { Fraunces, Newsreader, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
-// Display / question voice — editorial serif, used with restraint.
-// Only the weights we actually render, so the browser doesn't preload extras.
+// Display / question voice — a serif with real weight and presence (the
+// case-file headline face), used with restraint.
 const fraunces = Fraunces({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["500", "600"],
+  weight: ["500", "600", "700"],
   display: "swap",
 });
 
@@ -21,18 +21,19 @@ const newsreader = Newsreader({
   display: "swap",
 });
 
-// Citations, URLs, the loading readout — the "instrument" voice.
+// Case numbers, exhibit labels, the verdict stamp, the case-log — the
+// dossier/typewriter voice.
 const plexMono = IBM_Plex_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Answer engine — ask, get a cited answer",
+  title: "Case File — an answer engine that renders a verdict on its evidence",
   description:
-    "Ask a question and get a synthesized answer where every claim traces back to a live web source.",
+    "Ask a question and get a synthesized answer as a case report: numbered exhibits, and a verdict on whether the sources agree, differ, or don't address it.",
 };
 
 export default function RootLayout({
