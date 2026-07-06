@@ -98,13 +98,16 @@ STRUCTURED_PROMPT = (
     SYSTEM_PROMPT
     + "\n\nReturn a JSON object with exactly these keys:\n"
     '  "answer": the cited answer text (same rules as above),\n'
-    '  "agreement": one of "agree", "mixed", or "single" —\n'
+    '  "agreement": one of "agree", "mixed", "single", or "none" —\n'
     '     "agree" if the sources that address the question broadly corroborate '
     "each other,\n"
     '     "mixed" if sources meaningfully conflict or give differing figures,\n'
-    '     "single" if only one source really addresses it,\n'
+    '     "single" if exactly one source really addresses the question,\n'
+    '     "none" if none of the sources actually address the question '
+    "(the search returned results, but they are off-topic or irrelevant),\n"
     '  "agreement_note": a short phrase (max ~12 words) describing the '
-    'agreement, e.g. "3 sources agree; 1 gives a higher figure".\n'
+    'agreement, e.g. "3 sources agree; 1 gives a higher figure", or for '
+    '"none": "no sources address this question".\n'
     "Base the assessment only on the provided sources."
 )
 
@@ -159,19 +162,31 @@ def synthesize_structured(query: str, results: list[dict]) -> dict:
 
     import json
 
+    # Default agreement based on the actual source count, so a fallback never
+    # claims "single source" when several sources were retrieved.
+    default_agreement = "single" if len(results) == 1 else "agree"
+
     try:
         data = json.loads(raw)
         answer = str(data.get("answer", "")).strip()
-        agreement = str(data.get("agreement", "single")).strip().lower()
+        agreement = str(data.get("agreement", default_agreement)).strip().lower()
         note = str(data.get("agreement_note", "")).strip()
     except (json.JSONDecodeError, AttributeError):
         # Model didn't return clean JSON — degrade to a plain answer.
-        return {"answer": raw, "agreement": "single", "agreement_note": ""}
+        return {
+            "answer": raw,
+            "agreement": default_agreement,
+            "agreement_note": "",
+        }
 
     if not answer:
         raise SynthesisError("LLM returned an empty answer.")
-    if agreement not in ("agree", "mixed", "single"):
-        agreement = "single"
+    if agreement not in ("agree", "mixed", "single", "none"):
+        agreement = default_agreement
+    # "single" only makes sense with one source; with several, treat a stray
+    # "single" from the model as "agree" unless it meant "none".
+    if agreement == "single" and len(results) > 1:
+        agreement = "agree"
     return {"answer": answer, "agreement": agreement, "agreement_note": note}
 
 

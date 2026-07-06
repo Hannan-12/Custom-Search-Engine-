@@ -6,7 +6,7 @@ export type Source = {
   snippet?: string;
 };
 
-export type Agreement = "agree" | "mixed" | "single";
+export type Agreement = "agree" | "mixed" | "single" | "none";
 
 export type SearchResponse = {
   answer: string;

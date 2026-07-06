@@ -17,6 +17,7 @@ const CONFIG: Record<
   agree: { label: "Sources agree", glyph: "●", color: "var(--cite)" },
   mixed: { label: "Sources differ", glyph: "◆", color: "var(--warn)" },
   single: { label: "Single source", glyph: "○", color: "var(--muted)" },
+  none: { label: "No relevant sources", glyph: "⊘", color: "var(--danger)" },
 };
 
 export default function AgreementBadge({ agreement, note }: Props) {
