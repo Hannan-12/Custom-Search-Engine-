@@ -14,6 +14,8 @@ Then POST to /search:
 
 from __future__ import annotations
 
+import os
+
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -54,10 +56,15 @@ def rate_limit_handler(request: Request, exc: RateLimitExceeded):
         },
     )
 
-# Allow a local Next.js frontend to call this API from the browser.
+# Allow the frontend to call this API from the browser. Origins come from the
+# ALLOWED_ORIGINS env var (comma-separated) so the deployed Vercel URL can be
+# added without a code change; falls back to localhost for local development.
+_origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
+ALLOWED_ORIGINS = [o.strip() for o in _origins_env.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
